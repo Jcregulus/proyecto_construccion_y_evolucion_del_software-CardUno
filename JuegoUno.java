@@ -1,7 +1,16 @@
+// clase principal que controla la lógica del juego UNO
+// 
+// Funcionalidad:
+// Gestiona el flujo del juego (turnos, rondas)
+//  Controla las reglas de juego (cartas válidas, robar cartas)
+// Implementa la regla del UNO (decir UNO cuando queda 1 carta)
+//  Maneja la interacción entre jugador humano y computadora
+
 package uno;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 public class JuegoUno {
@@ -10,10 +19,16 @@ public class JuegoUno {
     private Mazo mazoPrincipal;
     private List<Carta> mazoDescarte;
     private boolean turnoHumano;
-    private String colorActual;
-    private int numeroActual;
+    private String colorActual; 
+    //private int numeroActual; //SE COMENTA ESTA LINEA YA QUE NO SE ULTILIZA 
+    //TAMBIEN SE COMENTARON VARIABLES QUE UTILIZAN ESTE METODO.
     private Scanner scanner;
 
+    /**
+     * Constructor del juego
+     * @param nombreJugador Nombre del jugador humano
+     * @param scanner Scanner compartido para entrada de datos
+     */
     public JuegoUno(String nombreJugador, Scanner scanner) {
         this.scanner = scanner;
         jugador = new Jugador(nombreJugador, true);
@@ -28,6 +43,9 @@ public class JuegoUno {
         jugar();
     }
 
+    /**
+     * Reparte 7 cartas iniciales a cada jugador
+     */
     private void repartirCartas() {
         System.out.println("\nRepartiendo cartas...");
         for (int i = 0; i < 7; i++) {
@@ -36,18 +54,28 @@ public class JuegoUno {
         }
     }
 
+    /**
+     * Coloca la primera carta en el mazo de descarte
+     * y establece el color y número iniciales
+     */
     private void iniciarJuego() {
         Carta primeraCarta = mazoPrincipal.tomarCarta();
         if (primeraCarta != null) {
             mazoDescarte.add(primeraCarta);
             colorActual = primeraCarta.getColor();
-            numeroActual = primeraCarta.getNumero();
+            //numeroActual = primeraCarta.getNumero();
             System.out.println("\nPRIMERA CARTA EN MESA:");
             System.out.println("   " + primeraCarta);
             System.out.println("-".repeat(50));
         }
     }
 
+    /**
+     * Toma una carta del mazo principal para el jugador indicado
+     * Si el mazo está vacío, lo reconstruye desde el descarte
+     * @param jugador Jugador que tomará la carta
+     * @return true si pudo tomar carta, false si no
+     */
     private boolean tomarDelMazo(Jugador jugador) {
         if (!mazoPrincipal.hayCartas()) {
             if (mazoPrincipal.reconstruir(mazoDescarte)) {
@@ -59,6 +87,11 @@ public class JuegoUno {
         return jugador.tomarCarta(mazoPrincipal) != null;
     }
 
+    /**
+     * Toma una carta del mazo y la devuelve (para evaluar si es válida)
+     * @param jugador Jugador que tomará la carta
+     * @return La carta tomada o null si no hay
+     */
     private Carta tomarDelMazoConRetorno(Jugador jugador) {
         if (!mazoPrincipal.hayCartas()) {
             if (mazoPrincipal.reconstruir(mazoDescarte)) {
@@ -70,7 +103,12 @@ public class JuegoUno {
         return jugador.tomarCarta(mazoPrincipal);
     }
     
-    // NUEVO MÉTODO: Aplicar penalización por no decir UNO
+    /**
+     * Aplica la penalización por no decir UNO
+     * El jugador penalizado roba 2 cartas
+     * @param jugadorPenalizado Jugador que no dijo UNO
+     * @param jugadorQueSorprende Jugador que sorprende
+     */
     private void aplicarPenalizacionUno(Jugador jugadorPenalizado, Jugador jugadorQueSorprende) {
         System.out.println("\n¡¡¡ PENALIZACIÓN !!!");
         System.out.println(jugadorPenalizado.getNombre() + " no dijo UNO y fue sorprendido por " + jugadorQueSorprende.getNombre());
@@ -81,7 +119,14 @@ public class JuegoUno {
         }
     }
     
-    // NUEVO MÉTODO: Verificar la regla del UNO
+    /**
+     * Verifica y aplica la regla del UNO
+     * - Detecta si un jugador tiene 1 carta
+     * - Pregunta si quiere decir UNO (si es humano)
+     * - Permite al otro jugador sorprender si no dijo UNO
+     * @param jugadorActual Jugador que acaba de terminar su turno
+     * @param otroJugador El otro jugador (quien puede sorprender)
+     */
     private void verificarReglaUno(Jugador jugadorActual, Jugador otroJugador) {
         // Si el jugador actual tiene 1 carta después de su turno
         if (jugadorActual.getMano().size() == 1) {
@@ -125,14 +170,27 @@ public class JuegoUno {
         }
     }
 
+    /**
+     * Gestiona el turno del jugador humano
+     * @return true si el jugador ganó al quedar sin cartas, false si no
+     */
+    /**
+     * SE MODIFICA EL METODO  turnoJugador PARA QUE ACEPTE LAS VALIDACIONES 
+     * DE LAS NUEVAS CARTAS INTEGRADAS A LA BARAJA Y NO SOLO POR COLOR O NUMERO
+     * ULTIMA MODIFICACIÓN 8-MARZO-26 BY JAV
+     */
     private boolean turnoJugador() {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("TURNO DEL JUGADOR");
         System.out.println("Carta en mesa: " + mazoDescarte.get(mazoDescarte.size() - 1));
 
         jugador.getMano().mostrar(jugador.getNombre());
+        //VARIABLE QUE GUARDA LA ULTIMA CARTA JUGADA (CARTA ACTUAL EN MESA)
+        //NOS AYUDARA A REALIZAR LAS NUEVAS VALIDACIONES
+        //ULTIMA MODIFICACIÓN 8-MARZO-26 BY JAV
+        Carta cartaMesa = mazoDescarte.get(mazoDescarte.size()-1);
         List<Integer> cartasValidas = jugador.getMano()
-                .obtenerCartasValidas(colorActual, numeroActual);
+                .obtenerCartasValidas(cartaMesa);
 
         if (!cartasValidas.isEmpty()) {
             System.out.println("\nCartas válidas: " + cartasValidas);
@@ -156,9 +214,10 @@ public class JuegoUno {
                         Carta cartaJugada = jugador.jugarCarta(indice);
                         mazoDescarte.add(cartaJugada);
                         colorActual = cartaJugada.getColor();
-                        numeroActual = cartaJugada.getNumero();
+                        //numeroActual = cartaJugada.getNumero();
                         System.out.println("  Jugaste: " + cartaJugada + "!");
-                        
+                        //SE ANEXA LA FUNCION EFECTOS ESPECIALES
+                        aplicarEfectosEspeciales(cartaJugada, jugador, maquina);
                         // Verificar si ganó
                         boolean gano = jugador.getMano().estaVacia();
                         
@@ -184,16 +243,20 @@ public class JuegoUno {
 
             if (cartaRobada != null) {
                 System.out.println("  Tomaste: " + cartaRobada);
-
-                if (cartaRobada.getColor().equals(colorActual) ||
-                        cartaRobada.getNumero() == numeroActual) {
-
+                
+                //if (cartaRobada.getColor().equals(colorActual) ||
+                        //cartaRobada.getNumero() == numeroActual) {
+                //SE COMENTA EL if DE ARRIBA YA QUE SOLO VALIDABA POR COLOR O NUMERO
+                //SE APLICA EL METODO ACTULIZADO 
+                if(cartaRobada.esValida(cartaMesa)){  
                     System.out.println("  ¡La carta robada ES VÁLIDA! Se juega automáticamente.");
                     int ultimoIndice = jugador.getMano().size() - 1;
                     Carta cartaJugada = jugador.jugarCarta(ultimoIndice);
                     mazoDescarte.add(cartaJugada);
                     colorActual = cartaJugada.getColor();
-                    numeroActual = cartaJugada.getNumero();
+                    //numeroActual = cartaJugada.getNumero();
+                    //YA QUE SE ROBO UNA CARTA SE VUELVE A APLICAR EFECTOS ESPECIALES SI ES QUE ES NECESARIO 
+                    aplicarEfectosEspeciales(cartaJugada, jugador, maquina);
                     System.out.println("  Jugaste la carta robada: " + cartaJugada + "!");
                     
                     // Verificar si ganó
@@ -217,22 +280,28 @@ public class JuegoUno {
         }
     }
 
+    /**
+     * Gestiona el turno de la computadora
+     * @return true si la computadora ganó al quedar sin cartas, false si no
+     */
     private boolean turnoMaquina() {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("TURNO DE LA COMPUTADORA");
         System.out.println("Carta en mesa: " + mazoDescarte.get(mazoDescarte.size() - 1));
-
+        
+        Carta cartaMesa = mazoDescarte.get(mazoDescarte.size()-1);
         List<Integer> cartasValidas = maquina.getMano()
-                .obtenerCartasValidas(colorActual, numeroActual);
+                .obtenerCartasValidas(cartaMesa);
 
         if (!cartasValidas.isEmpty()) {
             int indice = cartasValidas.get(0);
             Carta cartaJugada = maquina.jugarCarta(indice);
             mazoDescarte.add(cartaJugada);
             colorActual = cartaJugada.getColor();
-            numeroActual = cartaJugada.getNumero();
+            //numeroActual = cartaJugada.getNumero();
             System.out.println("  La computadora juega: " + cartaJugada + "!");
-            
+            //SE ANEXA LA FUNCION EFECTOS ESPECIALES
+            aplicarEfectosEspeciales(cartaJugada, maquina, jugador);
             // Verificar si ganó
             boolean gano = maquina.getMano().estaVacia();
             
@@ -250,16 +319,18 @@ public class JuegoUno {
             if (cartaRobada != null) {
                 System.out.println("  La computadora tomó: " + cartaRobada);
 
-                if (cartaRobada.getColor().equals(colorActual) ||
-                        cartaRobada.getNumero() == numeroActual) {
-
+                //if (cartaRobada.getColor().equals(colorActual) ||
+                        //cartaRobada.getNumero() == numeroActual) {
+                //SE COMENTA EL if DE ARRIBA YA QUE SOLO VALIDABA POR COLOR O NUMERO
+                //SE APLICA EL METODO ACTULIZADO 
+                if(cartaRobada.esValida(cartaMesa)){
                     System.out.println("  ¡La computadora juega la carta robada!");
                     int ultimoIndice = maquina.getMano().size() - 1;
                     Carta cartaJugada = maquina.jugarCarta(ultimoIndice);
                     mazoDescarte.add(cartaJugada);
                     colorActual = cartaJugada.getColor();
-                    numeroActual = cartaJugada.getNumero();
-                    
+                    //numeroActual = cartaJugada.getNumero();
+                    aplicarEfectosEspeciales(cartaJugada, maquina, jugador);
                     // Verificar si ganó
                     boolean gano = maquina.getMano().estaVacia();
                     
@@ -281,6 +352,115 @@ public class JuegoUno {
         }
     }
 
+    /** 
+     *SE AGREGA UN METODO PARA PODER ELEGIR COLOR CON LAS CARTAS ESPECIALES COMODIN Y ROBA4 JUGADOR HUMANO 
+     * ULTIMA MODIFICACIÓN 8-MARZO-26 BY JAV **/
+    private String elegirColor(){
+
+    System.out.println("Elige un color:");
+    System.out.println("1. ROJO");
+    System.out.println("2. AZUL");
+    System.out.println("3. VERDE");
+    System.out.println("4. AMARILLO");
+
+    int opcion = scanner.nextInt();
+    scanner.nextLine(); // limpiar buffer
+
+    switch (opcion) {
+        case 1: return "Rojo";
+        case 2: return "Azul";
+        case 3: return "Verde";
+        case 4: return "Amarillo";
+        default:
+            System.out.println("Color inválido. Se asignará uno al azar.");
+
+            String[] colores = {"Rojo", "Azul", "Verde", "Amarillo"};
+            Random random = new Random();
+
+            return colores[random.nextInt(colores.length)];
+        }
+    }
+
+    /** 
+     *SE AGREGA UN METODO PARA PODER ELEGIR COLOR CON LAS CARTAS ESPECIALES COMODIN Y ROBA4 JUGADOR MAQUINA 
+     * ULTIMA MODIFICACIÓN 8-MARZO-26 BY JAV **/
+    private String elegirColorMaquina(){
+        String[] colores = {"Rojo", "Azul", "Verde", "Amarillo"};
+        Random random = new Random();
+        String colorElegido = colores[random.nextInt(colores.length)];
+        System.out.println("La computadora elige el color: " + colorElegido);
+        return colorElegido;
+    }
+
+    /** 
+     *SE AGREGA UN METODO AUXILIAR PARA LAS CARTAS ESPECIALES REVERSA Y SALTO
+     * ULTIMA MODIFICACIÓN 8-MARZO-26 BY JAV **/
+    private boolean repetirTurno = false;
+
+    /** 
+     *SE AGREGA UN METODO PARA APLICAR LOS EFECTOS DE LAS NUEVAS CARTAS
+     * ROBA2
+     * ROBA4
+     * REVERSA
+     * SALTO
+     * ESTE METODO AFECTA A EL JUGADOR HUMANO Y JUGADOR MAQUINA
+     * ULTIMA MODIFICACIÓN 8-MARZO-26 BY JAV **/
+
+    private void aplicarEfectosEspeciales(Carta carta, Jugador jugadorActual, Jugador otroJugador){
+        switch (carta.getTipo()) {
+            case ROBA2:
+                System.out.println(otroJugador.getNombre() + " ¡Mala Suerte!");
+                System.out.println(otroJugador.getNombre() + " Se te anexan 2 cartas a tu mano!");
+                for (int i = 1; i <= 2; i++) {
+                    tomarDelMazo(otroJugador);
+                }
+                repetirTurno = true;
+                break;
+            case ROBA4:
+                System.out.println(otroJugador.getNombre() + " ¡Mala Suerte!");
+                System.out.println(otroJugador.getNombre() + " Se te anexan 4 cartas a tu mano!");
+                for (int i = 1; i <= 4; i++) {
+                    tomarDelMazo(otroJugador);
+                }
+                if(jugadorActual.isEsHumano()){
+                    colorActual = elegirColor();
+                    
+                }else{
+                    colorActual = elegirColorMaquina();
+                }
+                carta.setColor(colorActual);
+                System.out.println("El nuevo color es: " + colorActual);
+                repetirTurno = true;
+                break;
+            case SALTO:
+                System.out.println("¡Salto!");
+                // El mismo jugador vuelve a jugar
+                repetirTurno = true;
+                break;
+            case REVERSA:
+                System.out.println("¡Reversa!");
+                // El mismo jugador vuelve a jugar
+                repetirTurno = true;
+                break;
+            case COMODIN:
+                if(jugadorActual.isEsHumano()){
+                    colorActual = elegirColor();
+                    
+                }else{
+                    colorActual = elegirColorMaquina();
+                }
+                carta.setColor(colorActual);
+                System.out.println("El nuevo color es: " + colorActual);
+                break;
+            default:
+                break;
+        }
+    }
+
+    
+    /**
+     * Muestra el estado actual del juego (cartas en mazos y jugadores)
+     */
     private void mostrarEstado() {
         System.out.println("\n" + "-".repeat(50));
         System.out.println("Cartas en mazo principal: " + mazoPrincipal.size());
@@ -290,6 +470,10 @@ public class JuegoUno {
         System.out.println("-".repeat(50));
     }
 
+    /**
+     * Bucle principal del juego
+     * Controla las rondas, turnos y determina el ganador
+     */
     public void jugar() {
         System.out.println("\n" + "=".repeat(60));
         System.out.println("UNO - VERSIÓN NÚMEROS (0-9)");
@@ -313,12 +497,20 @@ public class JuegoUno {
             if (turnoHumano) {
                 juegoTerminado = turnoJugador();
                 if (!juegoTerminado) {
-                    turnoHumano = false;
+                    if(!repetirTurno){
+                        turnoHumano = false;
+                    }
+                    //SE AGREGA EL METODO QUE NOS AYUDARA CON LA CARTA SALTO Y REVERSA
+                    repetirTurno = false;
                 }
             } else {
                 juegoTerminado = turnoMaquina();
                 if (!juegoTerminado) {
-                    turnoHumano = true;
+                    if(!repetirTurno){
+                        turnoHumano = true;
+                    }
+                    //SE AGREGA EL METODO QUE NOS AYUDARA CON LA CARTA SALTO Y REVERSA
+                    repetirTurno = false;
                 }
             }
 
@@ -353,6 +545,9 @@ public class JuegoUno {
                     ronda = 0;
                 } else {
                     System.out.println("\n¡Gracias por jugar!");
+                    System.out.println("\nPresiona enter para salir");
+                    scanner.nextLine(); //para el break
+                    break;
                 }
             }
 
