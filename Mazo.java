@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Mazo {
+	
     private List<Carta> cartas;
     
     public Mazo() {
@@ -17,15 +18,24 @@ public class Mazo {
         String[] colores = {"Rojo", "Azul", "Verde", "Amarillo"};
         
         for (String color : colores) {
-            // Un 0 por color
             cartas.add(new Carta(color, 0));
             
-            // Dos cartas de cada número del 1 al 9
-            for (int numero = 1; numero <= 9; numero++) {
+            for (int numero = 1; numero <= 9; numero++){
                 cartas.add(new Carta(color, numero));
                 cartas.add(new Carta(color, numero));
             }
-        }
+
+            for (int i = 1; i <= 2; i++) {
+                cartas.add(new Carta(color, Carta.Tipo.SALTO));
+                cartas.add(new Carta(color, Carta.Tipo.REVERSA));
+                cartas.add(new Carta(color, Carta.Tipo.ROBA2));
+            }
+        }  
+        
+        for (int numero = 1; numero <= 4; numero++){
+            cartas.add(new Carta("Negro", Carta.Tipo.ROBA4));
+            cartas.add(new Carta("Negro", Carta.Tipo.COMODIN));
+        } 
     }
     
     public void barajar() {
@@ -53,12 +63,20 @@ public class Mazo {
         }
         
         Carta ultima = descarte.remove(descarte.size() - 1);
+        
+        // CORRECCIÓN DE BUG: Restaurar explícitamente el color "Negro"
+        for (Carta carta : descarte) {
+            if (carta.getTipo() == Carta.Tipo.COMODIN || carta.getTipo() == Carta.Tipo.ROBA4) {
+                carta.setColor("Negro");
+            }
+        }
+        
         cartas.addAll(descarte);
         descarte.clear();
         descarte.add(ultima);
         barajar();
         
-        System.out.println("  Reconstruyendo mazo desde descarte...");
+        System.out.println("  Reconstruyendo mazo desde descarte y limpiando colores de comodines...");
         return true;
     }
     
